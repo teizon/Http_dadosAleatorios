@@ -3,6 +3,7 @@
 <head>
   <title>Gráfico de Valores</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
   <canvas id="myChart"></canvas>
@@ -13,26 +14,52 @@
         .then(response => response.json())
         .then(data => {
           const ctx = document.getElementById('myChart').getContext('2d');
-          const labels = Array.from({ length: data.length }, (_, index) => index + 1);
+          let chart;
 
-          new Chart(ctx, {
-            type: 'line',
-            data: {
-              labels,
-              datasets: [{
-                label: 'Valores Lineares',
-                data,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-              }]
-            },
-            options: {
-              scales: {
-                y: {
-                  beginAtZero: true
+          // Função para inicializar o gráfico
+          function initializeChart() {
+            chart = new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: [],
+                datasets: [{
+                  label: 'Valores Lineares',
+                  data: [],
+                  borderColor: 'rgba(75, 192, 192, 1)',
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                scales: {
+                  y: {
+                    beginAtZero: true
+                  }
                 }
               }
-            }
+            });
+          }
+
+          // Função para adicionar novos dados ao gráfico
+          function addData(label, data) {
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(data);
+            chart.update();
+          }
+
+          // Inicializar o gráfico somente se ainda não estiver sido inicializado
+          if (!chart) {
+            initializeChart();
+          }
+
+          // Adicionar os dados existentes ao gráfico
+          data.forEach((value, index) => {
+            addData(index + 1, value);
+          });
+
+          // Configurar o Socket.IO para receber novos dados em tempo real
+          const socket = io();
+          socket.on('newDataAdded', (newData) => {
+            addData(chart.data.labels.length + 1, newData);
           });
         });
     }

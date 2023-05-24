@@ -40,14 +40,14 @@ int main()
         std::mt19937 generator(rd());
         std::uniform_real_distribution<double> distribution(0.0, 100.0);
 
-        for (int i = 0; i < 100; ++i)
+        while (true)
         {
             double data = distribution(generator);
 
             std::string dataStr = std::to_string(data);
             sendData((void *)dataStr.c_str(), sizeof(char), dataStr.length(), curl);
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Aguarde 100ms entre cada envio de dado
+            std::this_thread::sleep_for(std::chrono::seconds(1)); // Aguarde 1 segundo entre cada envio de dado
         }
 
         curl_easy_cleanup(curl);

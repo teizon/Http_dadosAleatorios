@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const socketio = require('socket.io');
 
 let data = []; // Array para armazenar os dados recebidos
 
@@ -23,6 +24,9 @@ const server = http.createServer((req, res) => {
       const newData = parseFloat(body);
       data.push(newData);
 
+      // Emitir evento para o cliente informando que um novo dado foi adicionado
+      io.emit('newDataAdded', newData);
+
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: true }));
     });
@@ -33,6 +37,17 @@ const server = http.createServer((req, res) => {
     res.writeHead(404);
     res.end('Página não encontrada');
   }
+});
+
+// Configurar Socket.IO
+const io = socketio(server);
+
+io.on('connection', socket => {
+  console.log('Cliente conectado');
+
+  socket.on('disconnect', () => {
+    console.log('Cliente desconectado');
+  });
 });
 
 server.listen(3000, () => {
