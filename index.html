@@ -13,16 +13,15 @@
         .then(response => response.json())
         .then(data => {
           const ctx = document.getElementById('myChart').getContext('2d');
-          const labels = Array.from({ length: data.length }, (_, index) => index);
+          const labels = Array.from({ length: data.length }, (_, index) => index + 1);
 
           new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
               labels,
               datasets: [{
-                label: 'Valores',
-                data: data,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                label: 'Valores Lineares',
+                data,
                 borderColor: 'rgba(75, 192, 192, 1)',
                 borderWidth: 1
               }]
@@ -30,21 +29,15 @@
             options: {
               scales: {
                 y: {
-                  beginAtZero: true,
-                  max: 100
+                  beginAtZero: true
                 }
               }
             }
           });
-        })
-        .catch(error => {
-          console.error('Erro ao obter os dados do servidor:', error);
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      fetchData();
-    });
+    fetchData();
   </script>
 </body>
 </html>

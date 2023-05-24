@@ -4,51 +4,53 @@
 #include <chrono>
 #include <thread>
 #include <curl/curl.h>
+#include <random>
 
 // Função para enviar os dados para o servidor HTTP
-void sendData(double data)
+size_t sendData(void *ptr, size_t size, size_t count, void *stream)
 {
-    CURL *curl;
+    // Formate os dados como uma string e envie-os como o corpo da solicitação POST
+    std::string dataStr = static_cast<char *>(ptr);
+
+    CURL *curl = static_cast<CURL *>(stream);
     CURLcode res;
     std::string url = "http://localhost:3000/data";
 
-    curl = curl_easy_init();
-    if (curl)
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_POST, 1);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, dataStr.c_str());
+
+    res = curl_easy_perform(curl);
+
+    if (res != CURLE_OK)
     {
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_POST, 1);
-
-        // Formate os dados como uma string e envie-os como o corpo da solicitação POST
-        std::string dataStr = std::to_string(data);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, dataStr.c_str());
-
-        res = curl_easy_perform(curl);
-
-        if (res != CURLE_OK)
-        {
-            std::cerr << "Erro ao enviar os dados para o servidor: " << curl_easy_strerror(res) << std::endl;
-        }
-
-        curl_easy_cleanup(curl);
+        std::cerr << "Erro ao enviar os dados para o servidor: " << curl_easy_strerror(res) << std::endl;
     }
+
+    return size * count;
 }
 
 int main()
 {
-    // Gere 100 dados lineares por segundo
-    double value = 0;
-    double increment = 1;
+    CURL *curl = curl_easy_init();
 
-    for (int i = 0; i < 100; i++)
+    if (curl)
     {
-        // Envie o valor para o servidor HTTP
-        sendData(value);
+        std::random_device rd;
+        std::mt19937 generator(rd());
+        std::uniform_real_distribution<double> distribution(0.0, 100.0);
 
-        // Aguarde 1 segundo antes de gerar o próximo valor
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        for (int i = 0; i < 100; ++i)
+        {
+            double data = distribution(generator);
 
-        // Atualize o valor para o próximo ciclo
-        value += increment;
+            std::string dataStr = std::to_string(data);
+            sendData((void *)dataStr.c_str(), sizeof(char), dataStr.length(), curl);
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Aguarde 100ms entre cada envio de dado
+        }
+
+        curl_easy_cleanup(curl);
     }
 
     return 0;
