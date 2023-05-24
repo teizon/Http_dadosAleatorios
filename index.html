@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gráfico de Valores</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <canvas id="myChart"></canvas>
+
+  <script>
+    function fetchData() {
+      fetch('/data')
+        .then(response => response.json())
+        .then(data => {
+          const ctx = document.getElementById('myChart').getContext('2d');
+          const labels = Array.from({ length: data.length }, (_, index) => index);
+
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels,
+              datasets: [{
+                label: 'Valores',
+                data: data,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+              }]
+            },
+            options: {
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  max: 100
+                }
+              }
+            }
+          });
+        })
+        .catch(error => {
+          console.error('Erro ao obter os dados do servidor:', error);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchData();
+    });
+  </script>
+</body>
+</html>
